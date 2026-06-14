@@ -40,7 +40,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
   const accessToken = signAccessToken(user.id);
   const refreshToken = signRefreshToken(user.id);
-  await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: hashToken(refreshToken) } }, { new: true });
+  await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: { $each: [hashToken(refreshToken)], $slice: -5 } } }, { new: true });
 
   res.cookie('refreshToken', refreshToken, COOKIE_OPTS);
   res.status(201).json({ accessToken });
@@ -60,7 +60,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
   const accessToken = signAccessToken(user.id);
   const refreshToken = signRefreshToken(user.id);
-  await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: hashToken(refreshToken) } }, { new: true });
+  await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: { $each: [hashToken(refreshToken)], $slice: -5 } } }, { new: true });
 
   res.cookie('refreshToken', refreshToken, COOKIE_OPTS);
   res.json({ accessToken });

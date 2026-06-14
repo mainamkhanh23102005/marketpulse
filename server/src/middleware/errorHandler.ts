@@ -11,7 +11,9 @@ export function errorHandler(
   _next: NextFunction
 ): void {
   const status = err.statusCode ?? 500;
-  res.status(status).json({ error: err.message ?? 'Internal server error' });
+  const isOperational = Boolean(err.statusCode);
+  if (!isOperational) console.error('[Unhandled error]', err);
+  res.status(status).json({ error: isOperational ? err.message : 'Internal server error' });
 }
 
 export function createError(message: string, statusCode: number): AppError {

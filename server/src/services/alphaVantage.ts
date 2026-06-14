@@ -7,9 +7,18 @@ function key(): string {
   return process.env.ALPHA_VANTAGE_API_KEY ?? '';
 }
 
+async function safeFetch(url: string): Promise<Awaited<ReturnType<typeof fetch>>> {
+  try {
+    return await fetch(url);
+  } catch (err: unknown) {
+    const raw = err instanceof Error ? err.message : String(err);
+    throw new Error(raw.replace(/apikey=[^&\s]*/gi, 'apikey=[REDACTED]'));
+  }
+}
+
 export async function getStockQuote(symbol: string): Promise<PriceQuote> {
   const url = `${BASE}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${key()}`;
-  const res = await fetch(url);
+  const res = await safeFetch(url);
   const data = await res.json() as Record<string, unknown>;
   const q = data['Global Quote'] as Record<string, string> | undefined;
   if (!q || !q['05. price']) throw new Error(`No data for ${symbol}`);
@@ -26,7 +35,7 @@ export async function getStockQuote(symbol: string): Promise<PriceQuote> {
 
 export async function getStockHistory(symbol: string, range: TimeRange): Promise<HistoryPoint[]> {
   const url = `${BASE}?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=compact&apikey=${key()}`;
-  const res = await fetch(url);
+  const res = await safeFetch(url);
   const data = await res.json() as Record<string, unknown>;
   const series = data['Time Series (Daily)'] as Record<string, Record<string, string>> | undefined;
   if (!series) throw new Error(`No history for ${symbol}`);
