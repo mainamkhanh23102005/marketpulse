@@ -12,8 +12,6 @@ A real-time market dashboard for retail traders and investors. Track live stock 
 |-----------|-------------|-----------|
 | ![Dashboard](https://placehold.co/380x220/1a1d27/9ca3af?text=Watchlist+%2B+Market+Summary) | ![Asset Detail](https://placehold.co/380x220/1a1d27/9ca3af?text=Price+Chart+%2B+Analytics) | ![News](https://placehold.co/380x220/1a1d27/9ca3af?text=Sentiment-Scored+Headlines) |
 
-> Replace placeholders with actual screenshots once the app is running locally.
-
 ---
 
 ## Features
