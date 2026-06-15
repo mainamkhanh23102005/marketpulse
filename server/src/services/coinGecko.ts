@@ -18,28 +18,45 @@ function resolveId(symbolOrId: string): string {
   return SYMBOL_TO_ID[key] ?? key;
 }
 
+interface CoinGeckoMarketData {
+  current_price?: { usd?: number };
+  price_change_24h?: number;
+  price_change_percentage_24h?: number;
+  high_24h?: { usd?: number };
+  low_24h?: { usd?: number };
+}
+
 export async function getCryptoQuote(id: string): Promise<PriceQuote> {
   const resolvedId = resolveId(id);
   const url = `${BASE}/coins/${resolvedId}?localization=false&tickers=false&community_data=false&developer_data=false`;
   const res = await fetch(url);
-  const data = await res.json() as Record<string, unknown>;
-  const market = data['market_data'] as Record<string, Record<string, number>> | undefined;
-  if (!market) throw new Error(`No data for ${resolvedId}`);
 
-  const price = market['current_price']['usd'];
-  const change = market['price_change_24h']['usd'] ?? market['price_change_24h'] as unknown as number;
-  const changePct = market['price_change_percentage_24h'] as unknown as number;
-  const high = market['high_24h']['usd'];
-  const low = market['low_24h']['usd'];
+  if (!res.ok) {
+    throw new Error(`CoinGecko HTTP ${res.status} for ${resolvedId}`);
+  }
+
+  const data = await res.json() as { market_data?: CoinGeckoMarketData };
+  const market = data.market_data;
+
+  if (!market) {
+    console.error(`[coinGecko] getCryptoQuote no market_data for ${resolvedId}:`, JSON.stringify(data).slice(0, 500));
+    throw new Error(`No data for ${resolvedId}`);
+  }
+
+  const price = market.current_price?.usd;
+  if (price == null) {
+    console.error(`[coinGecko] getCryptoQuote missing current_price.usd for ${resolvedId}:`, JSON.stringify(market).slice(0, 500));
+    throw new Error(`No price data for ${resolvedId}`);
+  }
 
   return {
     symbol: resolvedId,
     type: 'crypto',
     price,
-    change: typeof change === 'number' ? change : 0,
-    changePct: typeof changePct === 'number' ? changePct : 0,
-    high,
-    low,
+    change: market.price_change_24h ?? 0,
+    changePct: market.price_change_percentage_24h ?? 0,
+    high: market.high_24h?.usd ?? price,
+    low: market.low_24h?.usd ?? price,
   };
 }
 
@@ -48,7 +65,18 @@ export async function getCryptoHistory(id: string, range: TimeRange): Promise<Hi
   const days = RANGE_DAYS[range];
   const url = `${BASE}/coins/${resolvedId}/market_chart?vs_currency=usd&days=${days}`;
   const res = await fetch(url);
-  const data = await res.json() as { prices: number[][] };
+
+  if (!res.ok) {
+    throw new Error(`CoinGecko HTTP ${res.status} for ${resolvedId} history`);
+  }
+
+  const data = await res.json() as { prices?: number[][] };
+
+  if (!data.prices || !Array.isArray(data.prices)) {
+    console.error(`[coinGecko] getCryptoHistory no prices for ${resolvedId}:`, JSON.stringify(data).slice(0, 500));
+    throw new Error(`No price history for ${resolvedId}`);
+  }
+
   return data.prices.map(([ts, price]) => ({
     time: new Date(ts).toISOString().split('T')[0],
     open: price,
