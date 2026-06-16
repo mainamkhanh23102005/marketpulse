@@ -1,5 +1,6 @@
 # MarketPulse
-
+## 🚀 Live Demo
+**[https://marketpulse-xi-orcin.vercel.app](https://marketpulse-xi-orcin.vercel.app)**
 A real-time market dashboard for retail traders and investors. Track live stock and crypto prices, read sentiment-scored news headlines, and monitor your personal watchlist — all in one dark-themed web app.
 
 ![MarketPulse Dashboard](https://placehold.co/1200x630/1a1d27/4ade80?text=MarketPulse+Dashboard)
